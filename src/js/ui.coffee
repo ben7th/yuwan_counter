@@ -1,13 +1,51 @@
 class CounterUi
   constructor: ->
     @chatlist = new ChatList
+    @chatsender = new ChatSender
+
+    @yuwan_stack = new YuwanStack
 
   destory: ->
     @chatlist = null
+    @stop()
+
+  # 启动工作进程
+  # 工作进程是一个每 2 秒运行一次的 timer
+  start: ->
+    @timer_seconds = 0
+    @timer = setInterval =>
+      @_thanks()
+      @timer_seconds += 2
+    , 2000
+
+
+  # 停止工作进程
+  stop: ->
+    clearInterval @timer
+
+  # 鱼丸答谢
+  _thanks: ->
+    # 获取新增的鱼丸投喂记录，加入堆栈
+    @yuwan_stack.push @timer_seconds, @chatlist.updated_lines('yuwan')
+    @yuwan_stack.pop @timer_seconds, (username, count)=>
+      _actions = [
+        '投喂', '投出', '投掷', '投放' 
+        '赠送', '赠予', '送来'
+        '抛出', '发放', '空投' 
+        '丢来', '丢出'
+        '分发', '发射'
+        '打赏'
+      ]
+      
+      _action = _actions[~~ (Math.random() * _actions.length)]
+      _text = "感谢 #{username} #{_action}的#{count}个鱼丸！"
+      @chatsender.send _text
+
 
 class ChatList
   constructor: ->
     @$elm = jQuery 'ul#chat_line_list'
+    @$elm.find('li.jschartli').removeClass 'counted'
 
   # 获取当前页面内所有对话行
   lines: (kind = 'all')->
@@ -20,6 +58,22 @@ class ChatList
       else
         return (line for line in lines when line.kind is kind)
 
+  # 获取当前页面内所有新增对话行
+  # 已经获取过一次的对话行会被标记，下次不再获取
+  updated_lines: (kind = 'all')->
+    lines = for li in @$elm.find('li.jschartli:not(.counted)')
+      new ChatLine jQuery(li)
+
+    re = switch kind
+      when 'all'
+        lines
+      else
+        (line for line in lines when line.kind is kind)
+
+    for line in re
+      line.mark_counted()
+
+    re
 
 # 对话行
 # 对话行分为三种类型：
@@ -97,6 +151,71 @@ class ChatLine
       @username = @$li.find('.nick').text()
       @count = 100
 
+  # 标记为已经统计
+  mark_counted: ->
+    @$li.addClass('counted')
+
+
+# 鱼丸堆栈，记录投喂人和投喂数
+class YuwanStack
+  constructor: ->
+    @data = {}
+  
+  push: (timer_seconds, lines)->
+    for line in lines
+      username = line.username
+      @data[username] ?= {
+        seconds: timer_seconds
+        count: 0
+      }
+      @data[username].seconds = timer_seconds
+      @data[username].count += 100
+
+    # console.debug @data
+
+  # 从堆栈中弹出一个鱼丸记录，生成答谢信息
+  # 只有当时间间隔大于等于 2 秒时，才弹出
+  # 为防止弹幕爆炸，一次只弹出一条答谢
+  pop: (timer_seconds, func)->
+    # console.debug @data
+    for username, d of @data
+      if timer_seconds - d.seconds >= 2
+        func(username, d.count)
+        delete @data[username]
+        return
+
+class ChatSender
+  constructor: ->
+    @chars = [',', '.', '~', ';', '!', '`']
+    @idx = 0
+
+  send: (text)->
+    char = @chars[@idx]
+    @idx++
+    @idx = 0 if @idx is 6
+
+    _text = "#{text}#{char}"
+
+    console.debug _text
+
+    f = [
+      {name: "content", value: _text}
+      {name: "scope", value: jQuery("#privatstate").val()}
+    ]
+
+    c = check_user_login();
+    d = if not c then touristuid else c.wl_uid
+    f.push {name: "sender", value: d}
+
+    if jQuery("#privateuid").val() > 0
+      f.push {name: "receiver", value: jQuery("#privateuid").val()}
+
+    # thisMovie("WebRoom").js_sendmsg Sttencode(f)
+
 do ->
   window.cui.destory() if window.cui?
   window.cui = new CounterUi
+
+  # 启动鱼丸答谢功能
+  # window.cui.enable('yuwan_thanks')
+  window.cui.start()
