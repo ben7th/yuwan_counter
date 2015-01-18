@@ -28,7 +28,27 @@ window.cui.chatlist.lines('forbid') // 返回所有禁言公告行
 window.cui.chatlist.lines('yuwan') // 返回所有鱼丸赠送公告行
 ```
 
-## 斗鱼用户等级标识
+```javascript
+window.cui.start() // 启动自动鱼丸答谢
+```
+
+## 目前的功能特性
+
+### 鱼丸答谢
+
+每当有人赠送鱼丸，过两秒钟之后，给出答谢信息。如果连续赠送，间隔小于两秒，则直到赠送完毕后才给出答谢信息。
+
+TODO：当赠送鱼丸较多时，考虑延长答谢响应时间，以防止一大批鱼丸被分成多次答谢。<br/>
+TODO：根据鱼丸数目的不同，给出不同的答谢词<br/>
+TODO：如果用户赠送鱼丸过程中升级，给出特别贺词“渡劫成功”
+
+### Utils
+
+TODO：把所有对话改为由先进先出队列管理，这样鱼丸答谢的逻辑就可以简化一些。也便于以后扩展其他发言类型。
+
+-------------------
+
+## 附：斗鱼用户等级标识
 
 user1
 ![](http://staticlive.douyutv.com/common/douyu/images/classimg/user1.png)
