@@ -133,18 +133,15 @@
         this.kind = 'chat';
         this.username = this.$li.find('.name').text().slice(0, -1);
         this.chat = this.$li.find('span.text_cont').text();
-      }
-      if (this.raw.indexOf('系统提示：欢迎') > -1) {
+      } else if (this.raw.indexOf('系统提示：欢迎') > -1) {
         this.kind = 'welcome';
         this.username = this.raw.split(' ')[2];
         this.userlevel = this.$li.find('img').attr('src').split('classimg/')[1].split('.png')[0];
-      }
-      if (this.raw.indexOf('被管理员') > -1 && this.raw.indexOf('禁言') > -1) {
+      } else if (this.raw.indexOf('被管理员') > -1 && this.raw.indexOf('禁言') > -1) {
         this.kind = 'forbid';
         this.username = this.raw.split('被管理员')[0].split('系统广播: ')[1];
         this.manager = this.raw.split('被管理员')[1].split('禁言')[0];
-      }
-      if (this.raw.indexOf('赠送给主播') > -1) {
+      } else if (this.raw.indexOf('赠送给主播') > -1) {
         this.kind = 'yuwan';
         this.username = this.$li.find('.nick').text();
         this.count = 100;
@@ -187,7 +184,7 @@
       _ref = this.data;
       for (username in _ref) {
         d = _ref[username];
-        if (timer_seconds - d.seconds >= 2) {
+        if (timer_seconds - d.seconds >= 4) {
           func(username, d.count);
           delete this.data[username];
           return;
@@ -230,11 +227,12 @@
         value: d
       });
       if (jQuery("#privateuid").val() > 0) {
-        return f.push({
+        f.push({
           name: "receiver",
           value: jQuery("#privateuid").val()
         });
       }
+      return thisMovie("WebRoom").js_sendmsg(Sttencode(f));
     };
 
     return ChatSender;

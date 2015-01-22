@@ -136,17 +136,17 @@ class ChatLine
       @username = @$li.find('.name').text()[0...-1]
       @chat = @$li.find('span.text_cont').text()
 
-    if @raw.indexOf('系统提示：欢迎') > -1
+    else if @raw.indexOf('系统提示：欢迎') > -1
       @kind = 'welcome'
       @username = @raw.split(' ')[2]
       @userlevel = @$li.find('img').attr('src').split('classimg/')[1].split('.png')[0]
 
-    if @raw.indexOf('被管理员') > -1 and @raw.indexOf('禁言') > -1
+    else if @raw.indexOf('被管理员') > -1 and @raw.indexOf('禁言') > -1
       @kind = 'forbid'
       @username = @raw.split('被管理员')[0].split('系统广播: ')[1]
       @manager = @raw.split('被管理员')[1].split('禁言')[0]
 
-    if @raw.indexOf('赠送给主播') > -1
+    else if @raw.indexOf('赠送给主播') > -1
       @kind = 'yuwan'
       @username = @$li.find('.nick').text()
       @count = 100
@@ -179,7 +179,7 @@ class YuwanStack
   pop: (timer_seconds, func)->
     # console.debug @data
     for username, d of @data
-      if timer_seconds - d.seconds >= 2
+      if timer_seconds - d.seconds >= 4
         func(username, d.count)
         delete @data[username]
         return
@@ -210,7 +210,7 @@ class ChatSender
     if jQuery("#privateuid").val() > 0
       f.push {name: "receiver", value: jQuery("#privateuid").val()}
 
-    # thisMovie("WebRoom").js_sendmsg Sttencode(f)
+    thisMovie("WebRoom").js_sendmsg Sttencode(f)
 
 do ->
   window.cui.destory() if window.cui?
