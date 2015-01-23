@@ -1,45 +1,94 @@
 class CounterUi
+  SCAN_PERIOD: 500
+  SEND_PERIOD: 2000
+  # 鱼丸答谢响应时间
+  YUWAN_TNANKS_DELAY: 4000
+  # 调试模式，true 时不会发送聊天
+  DEBUG_MODE: false 
+
   constructor: ->
     @chatlist = new ChatList
-    @chatsender = new ChatSender
+    @yuwan_stack = new YuwanStack @
+    @chat_queue = new ChatQueue @
 
-    @yuwan_stack = new YuwanStack
 
+  # 销毁实例，并停止所有工作进程计时器
   destory: ->
     @chatlist = null
-    @stop()
+    clearInterval @scan_timer
+    clearInterval @send_timer
+
 
   # 启动工作进程
-  # 工作进程是一个每 2 秒运行一次的 timer
+  # 有两个工作进程，一个扫描进程，一个发言进程
+  # 扫描进程每 0.5 秒运行一次
+  # 发言进程每 2 秒运行一次
   start: ->
-    @timer_seconds = 0
-    @timer = setInterval =>
+    @scan_timer = setInterval =>
       @_thanks()
-      @timer_seconds += 2
-    , 2000
+    , @SCAN_PERIOD
 
+    @send_timer = setInterval =>
+      @chat_queue.shift()
+    , @SEND_PERIOD
 
-  # 停止工作进程
-  stop: ->
-    clearInterval @timer
 
   # 鱼丸答谢
   _thanks: ->
     # 获取新增的鱼丸投喂记录，加入堆栈
-    @yuwan_stack.push @timer_seconds, @chatlist.updated_lines('yuwan')
-    @yuwan_stack.pop @timer_seconds, (username, count)=>
-      _actions = [
-        '投喂', '投出', '投掷', '投放' 
-        '赠送', '赠予', '送来'
-        '抛出', '发放', '空投' 
-        '丢来', '丢出'
-        '分发', '发射'
-        '打赏'
-      ]
-      
-      _action = _actions[~~ (Math.random() * _actions.length)]
-      _text = "感谢 #{username} #{_action}的#{count}个鱼丸！"
-      @chatsender.send _text
+    @yuwan_stack
+      .push @chatlist.updated_lines('yuwan')
+      .release (username, data)=>
+        _actions = [
+          '投喂', '投出', '投掷', '投放' 
+          '赠送', '赠予', '送来'
+          '抛出', '发放', '空投' 
+          '丢来', '丢出'
+          '分发', '发射'
+          '打赏'
+        ]
+        
+        _action = _actions[~~ (Math.random() * _actions.length)]
+        _text = "感谢 #{username} #{_action}的#{data.count}个鱼丸！"
+        @chat_queue.push _text
+
+        # 升级检查
+        if true #data.begin_userlevel is not data.end_userlevel
+          _levels = {
+            user1:  '菜鸟'
+            user2:  '黄铜一'
+            user3:  '黄铜二'
+            user4:  '黄铜三'
+            user5:  '黄铜四'
+            user6:  '黄铜五'
+            user7:  '白银一'
+            user8:  '白银二'
+            user9:  '白银三'
+            user10: '白银四'
+            user11: '白银五'
+            user12: '黄金一'
+            user13: '黄金二'
+            user14: '黄金三'
+            user15: '黄金四'
+            user16: '黄金五'
+            user17: '铂金一'
+            user18: '铂金二'
+            user19: '铂金三'
+            user20: '铂金四'
+            user21: '铂金五'
+            user22: '钻石一'
+            user23: '钻石二'
+            user24: '钻石三'
+            user25: '钻石四'
+            user26: '钻石五'
+          }
+
+          if data.end_userlevel != data.begin_userlevel
+            # console.debug data
+            _level = _levels[data.end_userlevel]
+            _text1 = "！！恭喜 #{username} 渡劫到#{_level}！"
+            @chat_queue.push _text1
+
 
 
 class ChatList
@@ -150,6 +199,7 @@ class ChatLine
       @kind = 'yuwan'
       @username = @$li.find('.nick').text()
       @count = 100
+      @userlevel = @$li.find('img').attr('src').split('classimg/')[1].split('.png')[0]
 
   # 标记为已经统计
   mark_counted: ->
@@ -158,34 +208,44 @@ class ChatLine
 
 # 鱼丸堆栈，记录投喂人和投喂数
 class YuwanStack
-  constructor: ->
+  constructor: (@cui)->
     @data = {}
   
-  push: (timer_seconds, lines)->
+  push: (lines)->
+    time = new Date().getTime()
     for line in lines
       username = line.username
+      userlevel = line.userlevel
       @data[username] ?= {
-        seconds: timer_seconds
+        updated_at: time
         count: 0
+        begin_userlevel: userlevel
       }
-      @data[username].seconds = timer_seconds
+      @data[username].updated_at = time
       @data[username].count += 100
+      @data[username].end_userlevel = userlevel
 
-    # console.debug @data
+    return @
 
-  # 从堆栈中弹出一个鱼丸记录，生成答谢信息
-  # 只有当时间间隔大于等于 2 秒时，才弹出
-  # 为防止弹幕爆炸，一次只弹出一条答谢
-  pop: (timer_seconds, func)->
-    # console.debug @data
+
+  # 检查堆栈中的鱼丸记录
+  # 当当前时间减去鱼丸记录最后更新时间，其间隔大于 4 秒时
+  # 释放该鱼丸记录
+  # 同时采用传入的 callback func 进行处理
+  # 2015.1.23 由于发言方法已修改，因此可以一次释放多条记录了
+  release: (func)->
+    time = new Date().getTime()
     for username, d of @data
-      if timer_seconds - d.seconds >= 4
-        func(username, d.count)
+      if time - d.updated_at >= @cui.YUWAN_TNANKS_DELAY
+        func username, d
         delete @data[username]
-        return
+
+    return @
+
+
 
 class ChatSender
-  constructor: ->
+  constructor: (@cui)->
     @chars = [',', '.', '~', ';', '!', '`']
     @idx = 0
 
@@ -195,8 +255,6 @@ class ChatSender
     @idx = 0 if @idx is 6
 
     _text = "#{text}#{char}"
-
-    console.debug _text
 
     f = [
       {name: "content", value: _text}
@@ -210,12 +268,30 @@ class ChatSender
     if jQuery("#privateuid").val() > 0
       f.push {name: "receiver", value: jQuery("#privateuid").val()}
 
-    thisMovie("WebRoom").js_sendmsg Sttencode(f)
+    console.debug _text
+    if not @cui.DEBUG_MODE
+      thisMovie("WebRoom").js_sendmsg Sttencode(f)
+
+
+
+# 用法：
+# chat_queue.push(text) // 放入对话
+# chat_queue.shift() // 发送对话
+class ChatQueue
+  constructor: (@cui)->
+    @queue = []
+    @chatsender = new ChatSender @cui
+
+  push: (text)->
+    @queue.push text
+
+  shift: ->
+    # console.debug @queue.length
+    text = @queue.shift()
+    @chatsender.send(text) if text?
+
 
 do ->
   window.cui.destory() if window.cui?
   window.cui = new CounterUi
-
-  # 启动鱼丸答谢功能
-  # window.cui.enable('yuwan_thanks')
   window.cui.start()

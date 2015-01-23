@@ -1,41 +1,83 @@
 (function() {
-  var ChatLine, ChatList, ChatSender, CounterUi, YuwanStack;
+  var ChatLine, ChatList, ChatQueue, ChatSender, CounterUi, YuwanStack;
 
   CounterUi = (function() {
+    CounterUi.prototype.SCAN_PERIOD = 500;
+
+    CounterUi.prototype.SEND_PERIOD = 2000;
+
+    CounterUi.prototype.YUWAN_TNANKS_DELAY = 4000;
+
+    CounterUi.prototype.DEBUG_MODE = false;
+
     function CounterUi() {
       this.chatlist = new ChatList;
-      this.chatsender = new ChatSender;
-      this.yuwan_stack = new YuwanStack;
+      this.yuwan_stack = new YuwanStack(this);
+      this.chat_queue = new ChatQueue(this);
     }
 
     CounterUi.prototype.destory = function() {
       this.chatlist = null;
-      return this.stop();
+      clearInterval(this.scan_timer);
+      return clearInterval(this.send_timer);
     };
 
     CounterUi.prototype.start = function() {
-      this.timer_seconds = 0;
-      return this.timer = setInterval((function(_this) {
+      this.scan_timer = setInterval((function(_this) {
         return function() {
-          _this._thanks();
-          return _this.timer_seconds += 2;
+          return _this._thanks();
         };
-      })(this), 2000);
-    };
-
-    CounterUi.prototype.stop = function() {
-      return clearInterval(this.timer);
+      })(this), this.SCAN_PERIOD);
+      return this.send_timer = setInterval((function(_this) {
+        return function() {
+          return _this.chat_queue.shift();
+        };
+      })(this), this.SEND_PERIOD);
     };
 
     CounterUi.prototype._thanks = function() {
-      this.yuwan_stack.push(this.timer_seconds, this.chatlist.updated_lines('yuwan'));
-      return this.yuwan_stack.pop(this.timer_seconds, (function(_this) {
-        return function(username, count) {
-          var _action, _actions, _text;
+      return this.yuwan_stack.push(this.chatlist.updated_lines('yuwan')).release((function(_this) {
+        return function(username, data) {
+          var _action, _actions, _level, _levels, _text, _text1;
           _actions = ['投喂', '投出', '投掷', '投放', '赠送', '赠予', '送来', '抛出', '发放', '空投', '丢来', '丢出', '分发', '发射', '打赏'];
           _action = _actions[~~(Math.random() * _actions.length)];
-          _text = "感谢 " + username + " " + _action + "的" + count + "个鱼丸！";
-          return _this.chatsender.send(_text);
+          _text = "感谢 " + username + " " + _action + "的" + data.count + "个鱼丸！";
+          _this.chat_queue.push(_text);
+          if (true) {
+            _levels = {
+              user1: '菜鸟',
+              user2: '黄铜一',
+              user3: '黄铜二',
+              user4: '黄铜三',
+              user5: '黄铜四',
+              user6: '黄铜五',
+              user7: '白银一',
+              user8: '白银二',
+              user9: '白银三',
+              user10: '白银四',
+              user11: '白银五',
+              user12: '黄金一',
+              user13: '黄金二',
+              user14: '黄金三',
+              user15: '黄金四',
+              user16: '黄金五',
+              user17: '铂金一',
+              user18: '铂金二',
+              user19: '铂金三',
+              user20: '铂金四',
+              user21: '铂金五',
+              user22: '钻石一',
+              user23: '钻石二',
+              user24: '钻石三',
+              user25: '钻石四',
+              user26: '钻石五'
+            };
+            if (data.end_userlevel !== data.begin_userlevel) {
+              _level = _levels[data.end_userlevel];
+              _text1 = "！！恭喜 " + username + " 渡劫到" + _level + "！";
+              return _this.chat_queue.push(_text1);
+            }
+          }
         };
       })(this));
     };
@@ -145,6 +187,7 @@
         this.kind = 'yuwan';
         this.username = this.$li.find('.nick').text();
         this.count = 100;
+        this.userlevel = this.$li.find('img').attr('src').split('classimg/')[1].split('.png')[0];
       }
     }
 
@@ -157,39 +200,44 @@
   })();
 
   YuwanStack = (function() {
-    function YuwanStack() {
+    function YuwanStack(cui) {
+      this.cui = cui;
       this.data = {};
     }
 
-    YuwanStack.prototype.push = function(timer_seconds, lines) {
-      var line, username, _base, _i, _len, _results;
-      _results = [];
+    YuwanStack.prototype.push = function(lines) {
+      var line, time, userlevel, username, _base, _i, _len;
+      time = new Date().getTime();
       for (_i = 0, _len = lines.length; _i < _len; _i++) {
         line = lines[_i];
         username = line.username;
+        userlevel = line.userlevel;
         if ((_base = this.data)[username] == null) {
           _base[username] = {
-            seconds: timer_seconds,
-            count: 0
+            updated_at: time,
+            count: 0,
+            begin_userlevel: userlevel
           };
         }
-        this.data[username].seconds = timer_seconds;
-        _results.push(this.data[username].count += 100);
+        this.data[username].updated_at = time;
+        this.data[username].count += 100;
+        this.data[username].end_userlevel = userlevel;
       }
-      return _results;
+      return this;
     };
 
-    YuwanStack.prototype.pop = function(timer_seconds, func) {
-      var d, username, _ref;
+    YuwanStack.prototype.release = function(func) {
+      var d, time, username, _ref;
+      time = new Date().getTime();
       _ref = this.data;
       for (username in _ref) {
         d = _ref[username];
-        if (timer_seconds - d.seconds >= 4) {
-          func(username, d.count);
+        if (time - d.updated_at >= this.cui.YUWAN_TNANKS_DELAY) {
+          func(username, d);
           delete this.data[username];
-          return;
         }
       }
+      return this;
     };
 
     return YuwanStack;
@@ -197,7 +245,8 @@
   })();
 
   ChatSender = (function() {
-    function ChatSender() {
+    function ChatSender(cui) {
+      this.cui = cui;
       this.chars = [',', '.', '~', ';', '!', '`'];
       this.idx = 0;
     }
@@ -210,7 +259,6 @@
         this.idx = 0;
       }
       _text = "" + text + char;
-      console.debug(_text);
       f = [
         {
           name: "content",
@@ -232,10 +280,36 @@
           value: jQuery("#privateuid").val()
         });
       }
-      return thisMovie("WebRoom").js_sendmsg(Sttencode(f));
+      console.debug(_text);
+      if (!this.cui.DEBUG_MODE) {
+        return thisMovie("WebRoom").js_sendmsg(Sttencode(f));
+      }
     };
 
     return ChatSender;
+
+  })();
+
+  ChatQueue = (function() {
+    function ChatQueue(cui) {
+      this.cui = cui;
+      this.queue = [];
+      this.chatsender = new ChatSender(this.cui);
+    }
+
+    ChatQueue.prototype.push = function(text) {
+      return this.queue.push(text);
+    };
+
+    ChatQueue.prototype.shift = function() {
+      var text;
+      text = this.queue.shift();
+      if (text != null) {
+        return this.chatsender.send(text);
+      }
+    };
+
+    return ChatQueue;
 
   })();
 
