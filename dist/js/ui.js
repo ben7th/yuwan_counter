@@ -1,19 +1,22 @@
 (function() {
-  var ChatLine, ChatList, ChatQueue, ChatSender, CounterUi, YuwanStack;
+  var ChatLine, ChatList, ChatQueue, ChatSender, CounterUi, SaveQueue, YuwanStack;
 
   CounterUi = (function() {
     CounterUi.prototype.SCAN_PERIOD = 500;
 
     CounterUi.prototype.SEND_PERIOD = 2000;
 
+    CounterUi.prototype.SAVE_PERIOD = 5000;
+
     CounterUi.prototype.YUWAN_TNANKS_DELAY = 4000;
 
-    CounterUi.prototype.DEBUG_MODE = false;
+    CounterUi.prototype.DEBUG_MODE = true;
 
     function CounterUi() {
       this.chatlist = new ChatList;
       this.yuwan_stack = new YuwanStack(this);
       this.chat_queue = new ChatQueue(this);
+      this.save_queue = new SaveQueue(this);
     }
 
     CounterUi.prototype.destory = function() {
@@ -25,18 +28,46 @@
     CounterUi.prototype.start = function() {
       this.scan_timer = setInterval((function(_this) {
         return function() {
-          return _this._thanks();
+          return _this._scan();
         };
       })(this), this.SCAN_PERIOD);
-      return this.send_timer = setInterval((function(_this) {
+      this.send_timer = setInterval((function(_this) {
         return function() {
           return _this.chat_queue.shift();
         };
       })(this), this.SEND_PERIOD);
+      return this.save_timer = setInterval((function(_this) {
+        return function() {
+          return _this.save_queue.release();
+        };
+      })(this), this.SAVE_PERIOD);
     };
 
-    CounterUi.prototype._thanks = function() {
-      return this.yuwan_stack.push(this.chatlist.updated_lines('yuwan')).release((function(_this) {
+    CounterUi.prototype._scan = function() {
+      var chatlines, line, yuwan_lines, _i, _len, _results;
+      chatlines = this.chatlist.updated_lines();
+      yuwan_lines = (function() {
+        var _i, _len, _results;
+        _results = [];
+        for (_i = 0, _len = chatlines.length; _i < _len; _i++) {
+          line = chatlines[_i];
+          if (line.kind === 'yuwan') {
+            _results.push(line);
+          }
+        }
+        return _results;
+      })();
+      this._thanks(yuwan_lines);
+      _results = [];
+      for (_i = 0, _len = chatlines.length; _i < _len; _i++) {
+        line = chatlines[_i];
+        _results.push(this.save_queue.push(line.get_save_data()));
+      }
+      return _results;
+    };
+
+    CounterUi.prototype._thanks = function(yuwan_lines) {
+      return this.yuwan_stack.push(yuwan_lines).release((function(_this) {
         return function(username, data) {
           var _action, _actions, _level, _levels, _text, _text1;
           _actions = ['投喂', '投出', '投掷', '投放', '赠送', '赠予', '送来', '抛出', '发放', '空投', '丢来', '丢出', '分发', '发射', '打赏'];
@@ -195,6 +226,38 @@
       return this.$li.addClass('counted');
     };
 
+    ChatLine.prototype.get_save_data = function() {
+      var re;
+      re = (function() {
+        switch (this.kind) {
+          case 'chat':
+            return {
+              username: this.username,
+              text: this.chat
+            };
+          case 'welcome':
+            return {
+              username: this.username,
+              userlevel: this.userlevel
+            };
+          case 'forbid':
+            return {
+              username: this.username,
+              manager: this.manager
+            };
+          case 'yuwan':
+            return {
+              username: this.username,
+              userlevel: this.userlevel
+            };
+        }
+      }).call(this);
+      re.room_id = $ROOM.room_id;
+      re.talk_time = new Date().getTime();
+      re.chat_type = this.kind;
+      return re;
+    };
+
     return ChatLine;
 
   })();
@@ -310,6 +373,34 @@
     };
 
     return ChatQueue;
+
+  })();
+
+  SaveQueue = (function() {
+    function SaveQueue(cui) {
+      this.cui = cui;
+      this.queue = [];
+    }
+
+    SaveQueue.prototype.push = function(data) {
+      return this.queue.push(data);
+    };
+
+    SaveQueue.prototype.release = function() {
+      jQuery.ajax({
+        type: 'POST',
+        url: 'http://yuwan.4ye.me/api/chat_lines',
+        data: {
+          chat_lines: this.queue
+        },
+        success: function(res) {
+          return console.debug('聊天信息保存成功');
+        }
+      });
+      return this.queue = [];
+    };
+
+    return SaveQueue;
 
   })();
 

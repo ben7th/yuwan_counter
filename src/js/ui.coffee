@@ -1,15 +1,19 @@
 class CounterUi
   SCAN_PERIOD: 500
   SEND_PERIOD: 2000
+  # SAVE_PERIOD: 60000
+  SAVE_PERIOD: 5000
+
   # 鱼丸答谢响应时间
   YUWAN_TNANKS_DELAY: 4000
   # 调试模式，true 时不会发送聊天
-  DEBUG_MODE: false 
+  DEBUG_MODE: true 
 
   constructor: ->
     @chatlist = new ChatList
     @yuwan_stack = new YuwanStack @
     @chat_queue = new ChatQueue @
+    @save_queue = new SaveQueue @
 
 
   # 销毁实例，并停止所有工作进程计时器
@@ -25,19 +29,34 @@ class CounterUi
   # 发言进程每 2 秒运行一次
   start: ->
     @scan_timer = setInterval =>
-      @_thanks()
+      @_scan()
     , @SCAN_PERIOD
 
     @send_timer = setInterval =>
       @chat_queue.shift()
     , @SEND_PERIOD
 
+    @save_timer = setInterval =>
+      @save_queue.release()
+    , @SAVE_PERIOD
+
+
+  # 扫描聊天信息，并进行相应处理
+  _scan: ->
+    chatlines = @chatlist.updated_lines()
+    yuwan_lines = (line for line in chatlines when line.kind is 'yuwan')
+    @_thanks yuwan_lines
+
+    for line in chatlines
+      @save_queue.push line.get_save_data()
+
+
 
   # 鱼丸答谢
-  _thanks: ->
+  _thanks: (yuwan_lines)->
     # 获取新增的鱼丸投喂记录，加入堆栈
     @yuwan_stack
-      .push @chatlist.updated_lines('yuwan')
+      .push yuwan_lines
       .release (username, data)=>
         _actions = [
           '投喂', '投出', '投掷', '投放' 
@@ -205,6 +224,36 @@ class ChatLine
   mark_counted: ->
     @$li.addClass('counted')
 
+  # 整理为适合网络保存的结构
+  get_save_data: ->
+    re = switch @kind
+      when 'chat'
+        {
+          username: @username
+          text: @chat
+        }
+      when 'welcome'
+        {
+          username: @username
+          userlevel: @userlevel
+        }
+      when 'forbid'
+        {
+          username: @username
+          manager: @manager
+        }
+      when 'yuwan'
+        {
+          username: @username
+          userlevel: @userlevel
+        }
+
+    re.room_id = $ROOM.room_id # 斗鱼房间ID
+    re.talk_time = new Date().getTime()
+    re.chat_type = @kind
+    return re
+
+
 
 # 鱼丸堆栈，记录投喂人和投喂数
 class YuwanStack
@@ -289,6 +338,29 @@ class ChatQueue
     # console.debug @queue.length
     text = @queue.shift()
     @chatsender.send(text) if text?
+
+
+
+# 持久化保存队列，攒一批存一批
+class SaveQueue
+  constructor: (@cui)->
+    @queue = []
+
+  push: (data)->
+    @queue.push data
+
+  release: ->
+    # console.debug "即将保存 #{@queue.length} 条记录"
+    jQuery.ajax
+      type: 'POST'
+      url: 'http://yuwan.4ye.me/api/chat_lines'
+      data:
+        chat_lines: @queue
+      success: (res)->
+        console.debug '聊天信息保存成功'
+
+    @queue = []
+
 
 
 do ->
