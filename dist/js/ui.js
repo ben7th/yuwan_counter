@@ -6,11 +6,13 @@
 
     CounterUi.prototype.SEND_PERIOD = 2000;
 
-    CounterUi.prototype.SAVE_PERIOD = 5000;
+    CounterUi.prototype.SAVE_PERIOD = 30000;
+
+    CounterUi.prototype.STATUS_SAVE_PERIOD = 30000;
 
     CounterUi.prototype.YUWAN_TNANKS_DELAY = 4000;
 
-    CounterUi.prototype.DEBUG_MODE = true;
+    CounterUi.prototype.DEBUG_MODE = false;
 
     function CounterUi() {
       this.chatlist = new ChatList;
@@ -22,7 +24,9 @@
     CounterUi.prototype.destory = function() {
       this.chatlist = null;
       clearInterval(this.scan_timer);
-      return clearInterval(this.send_timer);
+      clearInterval(this.send_timer);
+      clearInterval(this.save_timer);
+      return clearInterval(this.status_save_timer);
     };
 
     CounterUi.prototype.start = function() {
@@ -36,11 +40,34 @@
           return _this.chat_queue.shift();
         };
       })(this), this.SEND_PERIOD);
-      return this.save_timer = setInterval((function(_this) {
+      this.save_timer = setInterval((function(_this) {
         return function() {
           return _this.save_queue.release();
         };
       })(this), this.SAVE_PERIOD);
+      return this.status_save_timer = setInterval((function(_this) {
+        return function() {
+          var follow_count, online_number;
+          follow_count = jQuery('#followtit').text().replace(',', '');
+          online_number = jQuery('#ol_num').text().replace(',', '');
+          console.debug("关注数：" + follow_count, "在线数：" + online_number);
+          return jQuery.ajax({
+            type: 'POST',
+            url: 'http://yuwan.4ye.me/api/room_status',
+            data: {
+              room_status: {
+                room_id: $ROOM.room_id,
+                follow_count: follow_count,
+                online_number: online_number,
+                time: new Date().getTime()
+              }
+            },
+            success: function(res) {
+              return console.debug('聊天室状态保存成功');
+            }
+          });
+        };
+      })(this), this.STATUS_SAVE_PERIOD);
     };
 
     CounterUi.prototype._scan = function() {
@@ -387,6 +414,9 @@
     };
 
     SaveQueue.prototype.release = function() {
+      if (this.queue.length === 0) {
+        return;
+      }
       jQuery.ajax({
         type: 'POST',
         url: 'http://yuwan.4ye.me/api/chat_lines',

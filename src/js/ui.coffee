@@ -1,13 +1,15 @@
 class CounterUi
   SCAN_PERIOD: 500
   SEND_PERIOD: 2000
-  # SAVE_PERIOD: 60000
-  SAVE_PERIOD: 5000
+  SAVE_PERIOD: 30000
+  # SAVE_PERIOD: 5000
+  STATUS_SAVE_PERIOD: 30000
+  # STATUS_SAVE_PERIOD: 5000
 
   # 鱼丸答谢响应时间
   YUWAN_TNANKS_DELAY: 4000
   # 调试模式，true 时不会发送聊天
-  DEBUG_MODE: true 
+  DEBUG_MODE: false 
 
   constructor: ->
     @chatlist = new ChatList
@@ -21,6 +23,8 @@ class CounterUi
     @chatlist = null
     clearInterval @scan_timer
     clearInterval @send_timer
+    clearInterval @save_timer
+    clearInterval @status_save_timer
 
 
   # 启动工作进程
@@ -40,13 +44,38 @@ class CounterUi
       @save_queue.release()
     , @SAVE_PERIOD
 
+    @status_save_timer = setInterval =>
+      follow_count = jQuery('#followtit').text().replace(',', '') # 关注人气
+      online_number = jQuery('#ol_num').text().replace(',', '') # 在线人数
+
+      console.debug "关注数：" + follow_count, "在线数：" + online_number
+
+      # console.debug "即将保存 #{@queue.length} 条记录"
+      jQuery.ajax
+        type: 'POST'
+        url: 'http://yuwan.4ye.me/api/room_status'
+        data:
+          room_status: {
+            room_id: $ROOM.room_id
+            follow_count: follow_count
+            online_number: online_number
+            time: new Date().getTime()
+          }
+        success: (res)->
+          console.debug '聊天室状态保存成功'
+
+    , @STATUS_SAVE_PERIOD
+
 
   # 扫描聊天信息，并进行相应处理
   _scan: ->
     chatlines = @chatlist.updated_lines()
+
+    # 鱼丸答谢
     yuwan_lines = (line for line in chatlines when line.kind is 'yuwan')
     @_thanks yuwan_lines
 
+    # 持久化聊天保存
     for line in chatlines
       @save_queue.push line.get_save_data()
 
@@ -350,6 +379,8 @@ class SaveQueue
     @queue.push data
 
   release: ->
+    return if @queue.length is 0
+
     # console.debug "即将保存 #{@queue.length} 条记录"
     jQuery.ajax
       type: 'POST'
