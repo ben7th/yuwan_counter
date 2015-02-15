@@ -1,0 +1,26 @@
+!!!
+%html{:lang => :zh}
+  %head
+    %title 斗鱼直播数据统计
+    %meta{:'http-equiv' => 'Content-Type', :content => 'text/html; charset=utf-8'}
+    %meta{:name => 'viewport', :content => 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no'}
+    %link{:rel => 'stylesheet', :href => '../dist/css/ui.css'}
+
+  %body
+    .page-stat.chatlines
+      .title 聊天数目统计
+      .gbox
+        .graph
+
+    .page-stat.yuwan-giving
+      .title 鱼丸赠送统计
+      .gbox
+        .graph
+
+    %script{:type => 'text/javascript', :src => '../lib/jquery-2.1.1.min.js'}
+    %script{:type => 'text/javascript', :src => '../lib/d3.min.js'}
+    %script{:type => 'text/javascript', :src => '../lib/d3.tip.v0.6.3.js'}
+
+    %script{:type => 'text/javascript', :src => '../dist/js/chatlines-graph.js'}
+    %script{:type => 'text/javascript', :src => '../dist/js/yuwan-giving-graph.js'}
+    %script{:type => 'text/javascript', :src => '../dist/js/stat.js'}

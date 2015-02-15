@@ -1,6 +1,6 @@
 class CounterUi
   SCAN_PERIOD: 500
-  SEND_PERIOD: 2000
+  SEND_PERIOD: 8000
   SAVE_PERIOD: 30000
   # SAVE_PERIOD: 5000
   STATUS_SAVE_PERIOD: 30000
@@ -50,13 +50,16 @@ class CounterUi
 
       console.debug "关注数：" + follow_count, "在线数：" + online_number
 
+      if not @room_id?
+        @room_id = jQuery('input[name=room_id]').val()
+
       # console.debug "即将保存 #{@queue.length} 条记录"
       jQuery.ajax
         type: 'POST'
         url: 'http://yuwan.4ye.me/api/room_status'
         data:
           room_status: {
-            room_id: $ROOM.room_id
+            room_id: @room_id
             follow_count: follow_count
             online_number: online_number
             time: new Date().getTime()
@@ -77,7 +80,8 @@ class CounterUi
 
     # 持久化聊天保存
     for line in chatlines
-      @save_queue.push line.get_save_data()
+      data = line.get_save_data()
+      @save_queue.push data if data?
 
 
 
@@ -189,6 +193,17 @@ class ChatList
 #   </p>
 # </li>
 
+# 当前用户“我”说的话
+# <li class="jschartli">
+#   <p class="my_cont">
+#     <span><img src="http://staticlive.douyutv.com/common/douyu/images/roomadmin.gif?20140704"></span>
+#     <span class="name">
+#       <a href="#" class="nick js_nick" rel="1331302" gid="1">我:</a>
+#     </span>
+#     <span class="m" chatid="4e7113263f3e41f57651000000000000">感谢&nbsp;ft303ft&nbsp;送来的200个鱼丸！!</span>
+#   </p>
+# </li>
+
 # 到访欢迎
 # <li class="jschartli">
 #   <p class="text_cont">
@@ -277,7 +292,10 @@ class ChatLine
           userlevel: @userlevel
         }
 
-    re.room_id = $ROOM.room_id # 斗鱼房间ID
+    return if not re?
+
+    # re.room_id = $ROOM.room_id # 斗鱼房间ID
+    re.room_id = jQuery('input[name=room_id]').val()
     re.talk_time = new Date().getTime()
     re.chat_type = @kind
     return re
