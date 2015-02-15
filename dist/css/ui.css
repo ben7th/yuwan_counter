@@ -1,0 +1,74 @@
+@charset "UTF-8";
+body {
+  background-color: #f1f1f1;
+  padding: 0;
+  margin: 0;
+  font-family: "Segoe UI", "Helvetica Neue", "Helvetica", "Arial", "sans-serif", "微软雅黑";
+  font-size: 14px;
+  line-height: 1.142857143;
+  color: #333; }
+
+.page-stat {
+  border: solid 1px #ddd;
+  background-color: #FFF;
+  margin: 10px; }
+  .page-stat .title {
+    background-color: #f7f7f7;
+    border: solid 1px #eee;
+    height: 40px;
+    line-height: 40px;
+    margin: 5px;
+    padding: 0 10px;
+    font-size: 14px;
+    font-weight: bold; }
+  .page-stat .gbox {
+    padding-bottom: 20%;
+    position: relative; }
+    .page-stat .gbox .graph {
+      position: absolute;
+      top: 0;
+      bottom: 5px;
+      left: 5px;
+      right: 5px; }
+
+.graph svg rect.bar:hover {
+  fill: #ffcc3f; }
+.graph svg g.axis path {
+  fill: none; }
+.graph svg g.axis line {
+  fill: none;
+  stroke: #333;
+  shape-rendering: crispEdges; }
+.graph svg g.axis text {
+  font-size: 14px; }
+.graph svg path.polyline {
+  fill: none;
+  stroke: #bbb;
+  stroke-width: 2px; }
+.graph svg circle.point {
+  fill: white;
+  stroke: #333;
+  stroke-width: 2px; }
+  .graph svg circle.point:hover {
+    fill: #ffcc3f; }
+
+.bar-tip {
+  background-color: #393f4e;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 3px;
+  font-weight: bold;
+  font-size: 14px;
+  line-height: 21px; }
+  .bar-tip .time-text, .bar-tip .count-text {
+    color: #ffcc3f; }
+  .bar-tip:after {
+    content: "";
+    position: absolute;
+    width: 0;
+    height: 0;
+    border: solid 5px transparent;
+    border-top-color: #393f4e;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px; }

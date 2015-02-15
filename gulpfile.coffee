@@ -12,9 +12,13 @@ plumber = require("gulp-plumber")
 
 app =
   src:
-    js: 'src/js/**/*.coffee'
+    js:   'src/js/**/*.coffee'
+    css:  'src/css/*.scss'
+    html: 'src/html/**/*.haml'
   dist:
-    js: 'dist/js'
+    js:   'dist/js'
+    css:  'dist/css'
+    html: 'stat'
 
 gulp.task 'js', ->
   gulp.src app.src.js
@@ -24,11 +28,35 @@ gulp.task 'js', ->
     # .pipe smaps.write('../maps')
     .pipe gulp.dest(app.dist.js)
 
+gulp.task 'css', ->
+  gulp.src app.src.css
+    .pipe sass({
+        "sourcemap=none": true
+    })
+    .on 'error', (err)->
+      file = err.message.match(/^error\s([\w\.]*)\s/)[1]
+      util.log [
+        err.plugin,
+        util.colors.red file
+        err.message
+      ].join ' '
+    .pipe concat('ui.css')
+    .pipe gulp.dest(app.dist.css)
+
+gulp.task 'html', ->
+  gulp.src app.src.html
+    .pipe haml()
+    .pipe gulp.dest(app.dist.html)
+
 gulp.task 'build', [
   'js'
+  'css'
+  'html'
 ]
 
 gulp.task 'default', ['build']
 
 gulp.task 'watch', ['build'], ->
   gulp.watch app.src.js, ['js']
+  gulp.watch app.src.css, ['css']
+  gulp.watch app.src.html, ['html']

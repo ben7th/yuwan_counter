@@ -38,10 +38,20 @@ window.cui.start() // 启动自动鱼丸答谢
 
 每当有人赠送鱼丸，过四秒钟之后，给出答谢信息。如果连续赠送，间隔小于四秒，则直到赠送完毕后才给出答谢信息。
 
-2015.1.23增加：如果用户赠送鱼丸过程中升级，给出特别贺词“渡劫成功”
+#### 2015.1.23
+增加：如果用户赠送鱼丸过程中升级，给出特别贺词“渡劫成功”<br/>
+当赠送鱼丸较多时，考虑延长答谢响应时间，以防止一大批鱼丸被分成多次答谢。<br/>
+根据鱼丸数目的不同，会给出不同的答谢词<br/>
 
-TODO：当赠送鱼丸较多时，考虑延长答谢响应时间，以防止一大批鱼丸被分成多次答谢。<br/>
-TODO：根据鱼丸数目的不同，给出不同的答谢词<br/>
+
+### 聊天记录持久化保存
+
+#### 2015.2.5 
+目前暂时保存在自己的服务器上。30秒保存一次。后续根据这些数据研究统计方法。
+
+TODO：带有表情的聊天目前捕捉不正确，需要 fix
+TODO：我自己说的话现在捕捉不正确。。
+TODO：有时候房间会有发言间隔，不能连续发言，需要考虑
 
 ### TODO：其他计划开发的功能
 
@@ -97,3 +107,14 @@ user22-user26
 ![](http://staticlive.douyutv.com/common/douyu/images/classimg/user24.png)
 ![](http://staticlive.douyutv.com/common/douyu/images/classimg/user25.png)
 ![](http://staticlive.douyutv.com/common/douyu/images/classimg/user26.png)
+
+
+## 统计功能
+
+### 查看统计测试页
+ruby -run -e httpd . -p 4000
+
+
+### changelog
+
+2015.2.11 修正了一个关于获取 room_id 的 bug

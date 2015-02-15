@@ -4,7 +4,7 @@
   CounterUi = (function() {
     CounterUi.prototype.SCAN_PERIOD = 500;
 
-    CounterUi.prototype.SEND_PERIOD = 2000;
+    CounterUi.prototype.SEND_PERIOD = 8000;
 
     CounterUi.prototype.SAVE_PERIOD = 30000;
 
@@ -51,12 +51,15 @@
           follow_count = jQuery('#followtit').text().replace(',', '');
           online_number = jQuery('#ol_num').text().replace(',', '');
           console.debug("关注数：" + follow_count, "在线数：" + online_number);
+          if (_this.room_id == null) {
+            _this.room_id = jQuery('input[name=room_id]').val();
+          }
           return jQuery.ajax({
             type: 'POST',
             url: 'http://yuwan.4ye.me/api/room_status',
             data: {
               room_status: {
-                room_id: $ROOM.room_id,
+                room_id: _this.room_id,
                 follow_count: follow_count,
                 online_number: online_number,
                 time: new Date().getTime()
@@ -71,7 +74,7 @@
     };
 
     CounterUi.prototype._scan = function() {
-      var chatlines, line, yuwan_lines, _i, _len, _results;
+      var chatlines, data, line, yuwan_lines, _i, _len, _results;
       chatlines = this.chatlist.updated_lines();
       yuwan_lines = (function() {
         var _i, _len, _results;
@@ -88,7 +91,12 @@
       _results = [];
       for (_i = 0, _len = chatlines.length; _i < _len; _i++) {
         line = chatlines[_i];
-        _results.push(this.save_queue.push(line.get_save_data()));
+        data = line.get_save_data();
+        if (data != null) {
+          _results.push(this.save_queue.push(data));
+        } else {
+          _results.push(void 0);
+        }
       }
       return _results;
     };
@@ -279,7 +287,10 @@
             };
         }
       }).call(this);
-      re.room_id = $ROOM.room_id;
+      if (re == null) {
+        return;
+      }
+      re.room_id = jQuery('input[name=room_id]').val();
       re.talk_time = new Date().getTime();
       re.chat_type = this.kind;
       return re;
