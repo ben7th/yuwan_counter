@@ -89,7 +89,7 @@
       y_scale = d3.scale.linear().domain([0, max]).range([height_without_axis, 20]);
       color_scale = d3.scale.linear().domain([0, max]).range(['#bbf', '#44f']);
       first_date = dataset[0].date;
-      last_date = d3.time.minute.offset(dataset[dataset.length - 1].date, 1);
+      last_date = d3.time.hour.offset(dataset[dataset.length - 1].date, 1);
       axis_scale = d3.time.scale().domain([first_date, last_date]).range([0, this.graph_width]);
       axis_date_format = d3.time.format('%H:%M');
       tip = d3.tip().attr({
@@ -148,9 +148,9 @@
         data: {
           "for": 'chat',
           room_id: this.room_id,
-          by: 'minute',
-          start: '2015-02-12 13:00',
-          end: '2015-02-12 20:00'
+          by: 'hour',
+          start: '2015-02-12 00:',
+          end: '2015-02-16 00:'
         },
         success: (function(_this) {
           return function(res) {

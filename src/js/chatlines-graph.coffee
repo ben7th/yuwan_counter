@@ -59,7 +59,7 @@ window.ChatlinesGraph = class ChatlinesGraph
       # .range ['#44b2f5', '#2a70e8']
 
     first_date = dataset[0].date
-    last_date = d3.time.minute.offset(dataset[dataset.length - 1].date, 1)
+    last_date = d3.time.hour.offset(dataset[dataset.length - 1].date, 1)
     axis_scale = d3.time.scale()
       .domain [first_date, last_date]
       .range [0, @graph_width]
@@ -180,9 +180,9 @@ window.ChatlinesGraph = class ChatlinesGraph
       data:
         for: 'chat'
         room_id: @room_id
-        by: 'minute'
-        start: '2015-02-12 13:00'
-        end: '2015-02-12 20:00'
+        by: 'hour'
+        start: '2015-02-12 00:'
+        end: '2015-02-16 00:'
       success: (res)=>
         # console.debug res
         dataset = DataFilter.from_response res

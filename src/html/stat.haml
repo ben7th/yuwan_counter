@@ -7,15 +7,20 @@
     %link{:rel => 'stylesheet', :href => '../dist/css/ui.css'}
 
   %body
-    .page-stat.chatlines
-      .title 聊天数目统计
-      .gbox
-        .graph
+    .container
+      .row
+        .col-pad-8
+          .page-stat.chatlines
+            .title 聊天数目统计
+            .gbox
+              .graph
 
-    .page-stat.yuwan-giving
-      .title 鱼丸赠送统计
-      .gbox
-        .graph
+      .row
+        .col-pad-8
+          .page-stat.yuwan-giving
+            .title 鱼丸赠送统计
+            .gbox
+              .graph
 
     %script{:type => 'text/javascript', :src => '../lib/jquery-2.1.1.min.js'}
     %script{:type => 'text/javascript', :src => '../lib/d3.min.js'}

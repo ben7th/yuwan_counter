@@ -2,7 +2,12 @@ class DataFilter
   @from_response: (res)->
     switch res.by
       when 'hour'
-        return ({'date': new Date(k), 'count': v} for k, v of res.data)
+        for k, v of res.data
+          {
+            date: new Date k
+            users: v
+            sum: d3.sum (v1 for k1, v1 of v)
+          }
       when 'minute'
         for k, v of res.data
           {
@@ -63,7 +68,7 @@ window.YuwanGivingGraph = class YuwanGivingGraph
       .range ['#99D7E2', '#25807F']
 
     first_date = dataset[0].date
-    last_date = d3.time.minute.offset(dataset[dataset.length - 1].date, 1)
+    last_date = d3.time.hour.offset(dataset[dataset.length - 1].date, 1)
     axis_scale = d3.time.scale()
       .domain [first_date, last_date]
       .range [0, @graph_width]
@@ -76,7 +81,7 @@ window.YuwanGivingGraph = class YuwanGivingGraph
       .offset [-10, 0]
       .html (data)->
         date0 = data.date
-        date1 = d3.time.minute.offset(date0, 1)
+        date1 = d3.time.hour.offset(date0, 1)
         """
           <div class='time'>
             <span>时段:</span>
@@ -137,9 +142,9 @@ window.YuwanGivingGraph = class YuwanGivingGraph
       url: @api_url
       data:
         room_id: @room_id
-        by: 'minute'
-        start: '2015-02-12 13:00'
-        end: '2015-02-12 20:00'
+        by: 'hour'
+        start: '2015-02-12 00:'
+        end: '2015-02-16 00:'
       success: (res)=>
         # console.debug res
         dataset = DataFilter.from_response res

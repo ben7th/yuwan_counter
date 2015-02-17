@@ -12,7 +12,7 @@
 
     CounterUi.prototype.YUWAN_TNANKS_DELAY = 4000;
 
-    CounterUi.prototype.DEBUG_MODE = false;
+    CounterUi.prototype.DEBUG_MODE = true;
 
     function CounterUi() {
       this.chatlist = new ChatList;
