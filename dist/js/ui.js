@@ -12,7 +12,7 @@
 
     CounterUi.prototype.YUWAN_TNANKS_DELAY = 4000;
 
-    CounterUi.prototype.DEBUG_MODE = true;
+    CounterUi.prototype.DEBUG_MODE = false;
 
     function CounterUi() {
       this.chatlist = new ChatList;
@@ -74,7 +74,7 @@
     };
 
     CounterUi.prototype._scan = function() {
-      var chatlines, data, line, yuwan_lines, _i, _len, _results;
+      var chatlines, chouqin_lines, data, line, yuwan_lines, _i, _len, _results;
       chatlines = this.chatlist.updated_lines();
       yuwan_lines = (function() {
         var _i, _len, _results;
@@ -88,6 +88,18 @@
         return _results;
       })();
       this._thanks(yuwan_lines);
+      chouqin_lines = (function() {
+        var _i, _len, _results;
+        _results = [];
+        for (_i = 0, _len = chatlines.length; _i < _len; _i++) {
+          line = chatlines[_i];
+          if (line.kind === 'chouqin') {
+            _results.push(line);
+          }
+        }
+        return _results;
+      })();
+      this._thanks_choutin(chouqin_lines);
       _results = [];
       for (_i = 0, _len = chatlines.length; _i < _len; _i++) {
         line = chatlines[_i];
@@ -109,43 +121,52 @@
           _action = _actions[~~(Math.random() * _actions.length)];
           _text = "感谢 " + username + " " + _action + "的" + data.count + "个鱼丸！";
           _this.chat_queue.push(_text);
-          if (true) {
-            _levels = {
-              user1: '菜鸟',
-              user2: '黄铜五',
-              user3: '黄铜四',
-              user4: '黄铜三',
-              user5: '黄铜二',
-              user6: '黄铜一',
-              user7: '白银五',
-              user8: '白银四',
-              user9: '白银三',
-              user10: '白银二',
-              user11: '白银一',
-              user12: '黄金五',
-              user13: '黄金四',
-              user14: '黄金三',
-              user15: '黄金二',
-              user16: '黄金一',
-              user17: '铂金五',
-              user18: '铂金四',
-              user19: '铂金三',
-              user20: '铂金二',
-              user21: '铂金一',
-              user22: '钻石五',
-              user23: '钻石四',
-              user24: '钻石三',
-              user25: '钻石二',
-              user26: '钻石一'
-            };
-            if (data.end_userlevel !== data.begin_userlevel) {
-              _level = _levels[data.end_userlevel];
-              _text1 = "！！恭喜 " + username + " 渡劫到" + _level + "！";
-              return _this.chat_queue.push(_text1);
-            }
+          _levels = {
+            user1: '菜鸟',
+            user2: '黄铜五',
+            user3: '黄铜四',
+            user4: '黄铜三',
+            user5: '黄铜二',
+            user6: '黄铜一',
+            user7: '白银五',
+            user8: '白银四',
+            user9: '白银三',
+            user10: '白银二',
+            user11: '白银一',
+            user12: '黄金五',
+            user13: '黄金四',
+            user14: '黄金三',
+            user15: '黄金二',
+            user16: '黄金一',
+            user17: '铂金五',
+            user18: '铂金四',
+            user19: '铂金三',
+            user20: '铂金二',
+            user21: '铂金一',
+            user22: '钻石五',
+            user23: '钻石四',
+            user24: '钻石三',
+            user25: '钻石二',
+            user26: '钻石一'
+          };
+          if (data.end_userlevel !== data.begin_userlevel) {
+            _level = _levels[data.end_userlevel];
+            _text1 = "！！恭喜 " + username + " 渡劫到" + _level + "！";
+            return _this.chat_queue.push(_text1);
           }
         };
       })(this));
+    };
+
+    CounterUi.prototype._thanks_choutin = function(chouqin_lines) {
+      var line, _i, _len, _results, _text;
+      _results = [];
+      for (_i = 0, _len = chouqin_lines.length; _i < _len; _i++) {
+        line = chouqin_lines[_i];
+        _text = "感谢 " + line.username + " 赠送的" + line.chouqinlevel + "酬勤！";
+        _results.push(this.chat_queue.push(_text));
+      }
+      return _results;
     };
 
     return CounterUi;
@@ -235,6 +256,7 @@
 
   ChatLine = (function() {
     function ChatLine($li) {
+      var match, src;
       this.$li = $li;
       this.raw = this.$li.find('p.text_cont').text();
       if (this.$li.hasClass('chartli')) {
@@ -244,7 +266,7 @@
       } else if (this.raw.indexOf('系统提示：欢迎') > -1) {
         this.kind = 'welcome';
         this.username = this.raw.split(' ')[2];
-        this.userlevel = this.$li.find('img').attr('src').split('classimg/')[1].split('.png')[0];
+        this.userlevel = this.$li.find('img').attr('src').split('classimg/')[1].split('.gif')[0];
       } else if (this.raw.indexOf('被管理员') > -1 && this.raw.indexOf('禁言') > -1) {
         this.kind = 'forbid';
         this.username = this.raw.split('被管理员')[0].split('系统广播: ')[1];
@@ -252,8 +274,20 @@
       } else if (this.raw.indexOf('赠送给主播') > -1) {
         this.kind = 'yuwan';
         this.username = this.$li.find('.nick').text();
-        this.count = 100;
-        this.userlevel = this.$li.find('img').attr('src').split('classimg/')[1].split('.png')[0];
+        this.userlevel = this.$li.find('img').attr('src').split('classimg/')[1].split('.gif')[0];
+        if (this.$li.find('i img').length > 0) {
+          src = this.$li.find('i img').attr('src');
+          match = src.match(/zs([0-9]+)/);
+          if (match) {
+            this.count = parseInt(match[1]);
+          }
+        } else {
+          this.count = parseInt(this.$li.find('i').text());
+        }
+      } else if (this.raw.indexOf('酬勤') > -1) {
+        this.kind = 'chouqin';
+        this.username = this.$li.find('.nick').text();
+        this.chouqinlevel = this.raw.match(/赠送了(.+)酬勤/)[1];
       }
     }
 
@@ -321,7 +355,7 @@
           };
         }
         this.data[username].updated_at = time;
-        this.data[username].count += 100;
+        this.data[username].count += line.count;
         this.data[username].end_userlevel = userlevel;
       }
       return this;

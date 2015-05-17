@@ -78,6 +78,10 @@ class CounterUi
     yuwan_lines = (line for line in chatlines when line.kind is 'yuwan')
     @_thanks yuwan_lines
 
+    # 酬勤答谢
+    chouqin_lines = (line for line in chatlines when line.kind is 'chouqin')
+    @_thanks_choutin chouqin_lines
+
     # 持久化聊天保存
     for line in chatlines
       data = line.get_save_data()
@@ -105,42 +109,46 @@ class CounterUi
         @chat_queue.push _text
 
         # 升级检查
-        if true #data.begin_userlevel is not data.end_userlevel
-          _levels = {
-            user1:  '菜鸟'
-            user2:  '黄铜五'
-            user3:  '黄铜四'
-            user4:  '黄铜三'
-            user5:  '黄铜二'
-            user6:  '黄铜一'
-            user7:  '白银五'
-            user8:  '白银四'
-            user9:  '白银三'
-            user10: '白银二'
-            user11: '白银一'
-            user12: '黄金五'
-            user13: '黄金四'
-            user14: '黄金三'
-            user15: '黄金二'
-            user16: '黄金一'
-            user17: '铂金五'
-            user18: '铂金四'
-            user19: '铂金三'
-            user20: '铂金二'
-            user21: '铂金一'
-            user22: '钻石五'
-            user23: '钻石四'
-            user24: '钻石三'
-            user25: '钻石二'
-            user26: '钻石一'
-          }
+        _levels = {
+          user1:  '菜鸟'
+          user2:  '黄铜五'
+          user3:  '黄铜四'
+          user4:  '黄铜三'
+          user5:  '黄铜二'
+          user6:  '黄铜一'
+          user7:  '白银五'
+          user8:  '白银四'
+          user9:  '白银三'
+          user10: '白银二'
+          user11: '白银一'
+          user12: '黄金五'
+          user13: '黄金四'
+          user14: '黄金三'
+          user15: '黄金二'
+          user16: '黄金一'
+          user17: '铂金五'
+          user18: '铂金四'
+          user19: '铂金三'
+          user20: '铂金二'
+          user21: '铂金一'
+          user22: '钻石五'
+          user23: '钻石四'
+          user24: '钻石三'
+          user25: '钻石二'
+          user26: '钻石一'
+        }
 
-          if data.end_userlevel != data.begin_userlevel
-            # console.debug data
-            _level = _levels[data.end_userlevel]
-            _text1 = "！！恭喜 #{username} 渡劫到#{_level}！"
-            @chat_queue.push _text1
+        if data.end_userlevel != data.begin_userlevel
+          # console.debug data
+          _level = _levels[data.end_userlevel]
+          _text1 = "！！恭喜 #{username} 渡劫到#{_level}！"
+          @chat_queue.push _text1
 
+  # 酬勤答谢
+  _thanks_choutin: (chouqin_lines)->
+    for line in chouqin_lines
+      _text = "感谢 #{line.username} 赠送的#{line.chouqinlevel}酬勤！"
+      @chat_queue.push _text
 
 
 class ChatList
@@ -238,6 +246,32 @@ class ChatList
 #   </p>
 # </li>
 
+# 赠送特殊鱼丸
+# <li class="jschartli">
+#   <p class="text_cont">
+#     <img src="http://staticlive.douyutv.com/common/douyu/images/classimg/user2.png">
+#       <a href="#" class="nick js_nick" rel="10021060">mawenzhe7</a>
+#       <br>赠送给主播
+#       <i><img src="http://staticlive.douyutv.com/common/douyu/images/zs520.png?v3979.1">
+#       </i>个鱼丸
+#       <img src="http://staticlive.douyutv.com/common/douyu/images/yw520.png?20150430">
+#   </p>
+# </li>
+
+# 赠送酬勤
+# <li class="jschartli counted aaa">
+#   <p class="text_cont">
+#     <img src="http://staticlive.douyutv.com/common/douyu/images/classimg/user7.png">
+#     <a href="#" class="nick" rel="939651">泣血剑殇</a> 
+#     赠送了高级酬勤
+#     <img src="http://staticlive.douyutv.com/common/douyu/images/cq3.gif?">
+#     成为了本房间
+#     <span>
+#     <img src="http://staticlive.douyutv.com/common/douyu/images/no3.gif?">
+#     </span>会员
+#   </p>
+# </li>
+
 class ChatLine
   constructor: (@$li)->
     @raw = @$li.find('p.text_cont').text()
@@ -251,7 +285,7 @@ class ChatLine
     else if @raw.indexOf('系统提示：欢迎') > -1
       @kind = 'welcome'
       @username = @raw.split(' ')[2]
-      @userlevel = @$li.find('img').attr('src').split('classimg/')[1].split('.png')[0]
+      @userlevel = @$li.find('img').attr('src').split('classimg/')[1].split('.gif')[0]
 
     else if @raw.indexOf('被管理员') > -1 and @raw.indexOf('禁言') > -1
       @kind = 'forbid'
@@ -261,8 +295,20 @@ class ChatLine
     else if @raw.indexOf('赠送给主播') > -1
       @kind = 'yuwan'
       @username = @$li.find('.nick').text()
-      @count = 100
-      @userlevel = @$li.find('img').attr('src').split('classimg/')[1].split('.png')[0]
+      @userlevel = @$li.find('img').attr('src').split('classimg/')[1].split('.gif')[0]
+
+      # 这里要分情况，特殊赠送的话是图片
+      if @$li.find('i img').length > 0
+        src = @$li.find('i img').attr('src')
+        match = src.match /zs([0-9]+)/
+        @count = parseInt(match[1]) if match
+      else
+        @count = parseInt @$li.find('i').text()
+
+    else if @raw.indexOf('酬勤') > -1
+      @kind = 'chouqin'
+      @username = @$li.find('.nick').text()
+      @chouqinlevel = @raw.match(/赠送了(.+)酬勤/)[1]
 
   # 标记为已经统计
   mark_counted: ->
@@ -318,7 +364,7 @@ class YuwanStack
         begin_userlevel: userlevel
       }
       @data[username].updated_at = time
-      @data[username].count += 100
+      @data[username].count += line.count
       @data[username].end_userlevel = userlevel
 
     return @
