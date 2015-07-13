@@ -2077,11 +2077,11 @@ a.btn, button.btn, input[type=submit].btn {
       -o-box-shadow: inset 0px 1px 3px rgba(0, 0, 0, 0.3), 0px 1px 0px white;
       box-shadow: inset 0px 1px 3px rgba(0, 0, 0, 0.3), 0px 1px 0px white; }
   a.btn.btn-solid-warning, button.btn.btn-solid-warning, input[type=submit].btn.btn-solid-warning {
-    background: -webkit-linear-gradient(top, #ffd359, #ffc525);
-    background: -moz-linear-gradient(top, #ffd359, #ffc525);
-    background: -ms-linear-gradient(top, #ffd359, #ffc525);
-    background: -o-linear-gradient(top, #ffd359, #ffc525);
-    background: linear-gradient(top, #ffd359, #ffc525);
+    background: -webkit-linear-gradient(top, #ffd359, #ffc526);
+    background: -moz-linear-gradient(top, #ffd359, #ffc526);
+    background: -ms-linear-gradient(top, #ffd359, #ffc526);
+    background: -o-linear-gradient(top, #ffd359, #ffc526);
+    background: linear-gradient(top, #ffd359, #ffc526);
     color: #fff;
     border: solid 1px #ffbe0c;
     -webkit-box-shadow: inset 0px 1px 0px 0px rgba(255, 255, 255, 0.5), 0px 1px 1px 0px rgba(0, 0, 0, 0.2);
@@ -2274,7 +2274,7 @@ a.btn, button.btn, input[type=submit].btn {
       background: -o-linear-gradient(top, #ff6933, #db3a00);
       background: linear-gradient(top, #ff6933, #db3a00); }
     a.btn.btn-solid-hot:active, button.btn.btn-solid-hot:active, input[type=submit].btn.btn-solid-hot:active {
-      background: #e65019;
+      background: #e6501a;
       -webkit-box-shadow: inset 0px 1px 3px rgba(0, 0, 0, 0.3), 0px 1px 0px white;
       -moz-box-shadow: inset 0px 1px 3px rgba(0, 0, 0, 0.3), 0px 1px 0px white;
       -ms-box-shadow: inset 0px 1px 3px rgba(0, 0, 0, 0.3), 0px 1px 0px white;
@@ -2421,11 +2421,11 @@ a.btn, button.btn, input[type=submit].btn {
       -o-box-shadow: inset 0px 1px 3px rgba(0, 0, 0, 0.3), 0px 1px 0px white;
       box-shadow: inset 0px 1px 3px rgba(0, 0, 0, 0.3), 0px 1px 0px white; }
   a.btn.btn-solid-dawn, button.btn.btn-solid-dawn, input[type=submit].btn.btn-solid-dawn {
-    background: -webkit-linear-gradient(top, #fffffc, #fff7c9);
-    background: -moz-linear-gradient(top, #fffffc, #fff7c9);
-    background: -ms-linear-gradient(top, #fffffc, #fff7c9);
-    background: -o-linear-gradient(top, #fffffc, #fff7c9);
-    background: linear-gradient(top, #fffffc, #fff7c9);
+    background: -webkit-linear-gradient(top, #fffffd, #fff7ca);
+    background: -moz-linear-gradient(top, #fffffd, #fff7ca);
+    background: -ms-linear-gradient(top, #fffffd, #fff7ca);
+    background: -o-linear-gradient(top, #fffffd, #fff7ca);
+    background: linear-gradient(top, #fffffd, #fff7ca);
     color: #666666;
     border: solid 1px #fff4b0;
     -webkit-box-shadow: inset 0px 1px 0px 0px rgba(255, 255, 255, 0.5), 0px 1px 1px 0px rgba(0, 0, 0, 0.2);
@@ -2693,11 +2693,11 @@ a.btn, button.btn, input[type=submit].btn {
     text-shadow: 0 -1px 1px rgba(0, 0, 0, 0.3);
     line-height: 29.9998px; }
     a.btn.btn-solid-dream:hover, button.btn.btn-solid-dream:hover, input[type=submit].btn.btn-solid-dream:hover {
-      background: -webkit-linear-gradient(top, #ab3eb2, #6d2872);
-      background: -moz-linear-gradient(top, #ab3eb2, #6d2872);
-      background: -ms-linear-gradient(top, #ab3eb2, #6d2872);
-      background: -o-linear-gradient(top, #ab3eb2, #6d2872);
-      background: linear-gradient(top, #ab3eb2, #6d2872); }
+      background: -webkit-linear-gradient(top, #ab3eb2, #6e2872);
+      background: -moz-linear-gradient(top, #ab3eb2, #6e2872);
+      background: -ms-linear-gradient(top, #ab3eb2, #6e2872);
+      background: -o-linear-gradient(top, #ab3eb2, #6e2872);
+      background: linear-gradient(top, #ab3eb2, #6e2872); }
     a.btn.btn-solid-dream:active, button.btn.btn-solid-dream:active, input[type=submit].btn.btn-solid-dream:active {
       background: #764479;
       -webkit-box-shadow: inset 0px 1px 3px rgba(0, 0, 0, 0.3), 0px 1px 0px white;

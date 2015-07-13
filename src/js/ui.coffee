@@ -14,6 +14,7 @@ class CounterUi
   constructor: ->
     @chatlist = new ChatList
     @yuwan_stack = new YuwanStack @
+    @chouqin_stack = new ChouqinStack @
     @chat_queue = new ChatQueue @
     @save_queue = new SaveQueue @
 
@@ -97,11 +98,12 @@ class CounterUi
       .release (username, data)=>
         _actions = [
           '投喂', '投出', '投掷', '投放' 
-          '赠送', '赠予', '送来'
-          '抛出', '发放', '空投' 
+          '赠送', '赠予'
+          '送来', '送出'
+          '抛出', '发放', '空投', '扔出'
           '丢来', '丢出'
           '分发', '发射'
-          '打赏'
+          '打赏', '快递'
         ]
         
         _action = _actions[~~ (Math.random() * _actions.length)]
@@ -146,9 +148,14 @@ class CounterUi
 
   # 酬勤答谢
   _thanks_choutin: (chouqin_lines)->
-    for line in chouqin_lines
-      _text = "感谢 #{line.username} 赠送的#{line.chouqinlevel}酬勤！"
-      @chat_queue.push _text
+    # 获取新增的酬勤记录，加入堆栈
+    @chouqin_stack
+      .push chouqin_lines
+      .release (username, data)=>
+        for chouqinlevel in ['初级', '中级', '高级']
+          if data[chouqinlevel] > 0
+            _text = "感谢 #{username} 赠送的#{data[chouqinlevel]}个#{chouqinlevel}酬勤！"
+            @chat_queue.push _text
 
 
 class ChatList
@@ -184,6 +191,7 @@ class ChatList
 
     re
 
+###
 # 对话行
 # 对话行分为三种类型：
 # 1. 普通对话。包含说话人和说话内容
@@ -271,7 +279,7 @@ class ChatList
 #     </span>会员
 #   </p>
 # </li>
-
+###
 class ChatLine
   constructor: (@$li)->
     @raw = @$li.find('p.text_cont').text()
@@ -375,6 +383,36 @@ class YuwanStack
   # 释放该鱼丸记录
   # 同时采用传入的 callback func 进行处理
   # 2015.1.23 由于发言方法已修改，因此可以一次释放多条记录了
+  release: (func)->
+    time = new Date().getTime()
+    for username, d of @data
+      if time - d.updated_at >= @cui.YUWAN_TNANKS_DELAY
+        func username, d
+        delete @data[username]
+
+    return @
+
+
+# 酬勤堆栈，记录投喂人和投喂数
+class ChouqinStack
+  constructor: (@cui)->
+    @data = {}
+
+  push: (lines)->
+    time = new Date().getTime()
+    for line in lines
+      username = line.username
+      chouqinlevel = line.chouqinlevel
+
+      @data[username] ?= {
+        updated_at: time
+      }
+      @data[username].updated_at = time
+      @data[username][chouqinlevel] ?= 0
+      @data[username][chouqinlevel] = @data[username][chouqinlevel] + 1
+
+    return @
+
   release: (func)->
     time = new Date().getTime()
     for username, d of @data

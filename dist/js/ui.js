@@ -1,5 +1,5 @@
 (function() {
-  var ChatLine, ChatList, ChatQueue, ChatSender, CounterUi, SaveQueue, YuwanStack;
+  var ChatLine, ChatList, ChatQueue, ChatSender, ChouqinStack, CounterUi, SaveQueue, YuwanStack;
 
   CounterUi = (function() {
     CounterUi.prototype.SCAN_PERIOD = 500;
@@ -17,6 +17,7 @@
     function CounterUi() {
       this.chatlist = new ChatList;
       this.yuwan_stack = new YuwanStack(this);
+      this.chouqin_stack = new ChouqinStack(this);
       this.chat_queue = new ChatQueue(this);
       this.save_queue = new SaveQueue(this);
     }
@@ -117,7 +118,7 @@
       return this.yuwan_stack.push(yuwan_lines).release((function(_this) {
         return function(username, data) {
           var _action, _actions, _level, _levels, _text, _text1;
-          _actions = ['投喂', '投出', '投掷', '投放', '赠送', '赠予', '送来', '抛出', '发放', '空投', '丢来', '丢出', '分发', '发射', '打赏'];
+          _actions = ['投喂', '投出', '投掷', '投放', '赠送', '赠予', '送来', '送出', '抛出', '发放', '空投', '扔出', '丢来', '丢出', '分发', '发射', '打赏', '快递'];
           _action = _actions[~~(Math.random() * _actions.length)];
           _text = "感谢 " + username + " " + _action + "的" + data.count + "个鱼丸！";
           _this.chat_queue.push(_text);
@@ -159,14 +160,23 @@
     };
 
     CounterUi.prototype._thanks_choutin = function(chouqin_lines) {
-      var line, _i, _len, _results, _text;
-      _results = [];
-      for (_i = 0, _len = chouqin_lines.length; _i < _len; _i++) {
-        line = chouqin_lines[_i];
-        _text = "感谢 " + line.username + " 赠送的" + line.chouqinlevel + "酬勤！";
-        _results.push(this.chat_queue.push(_text));
-      }
-      return _results;
+      return this.chouqin_stack.push(chouqin_lines).release((function(_this) {
+        return function(username, data) {
+          var chouqinlevel, _i, _len, _ref, _results, _text;
+          _ref = ['初级', '中级', '高级'];
+          _results = [];
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            chouqinlevel = _ref[_i];
+            if (data[chouqinlevel] > 0) {
+              _text = "感谢 " + username + " 赠送的" + data[chouqinlevel] + "个" + chouqinlevel + "酬勤！";
+              _results.push(_this.chat_queue.push(_text));
+            } else {
+              _results.push(void 0);
+            }
+          }
+          return _results;
+        };
+      })(this));
     };
 
     return CounterUi;
@@ -253,6 +263,97 @@
     return ChatList;
 
   })();
+
+
+  /*
+   * 对话行
+   * 对话行分为三种类型：
+   * 1. 普通对话。包含说话人和说话内容
+   * 2. 到访欢迎。包含到访人和到访人等级信息
+   * 3. 封禁广播。包含被封禁人信息
+   * 4. 赠送鱼丸。包含鱼丸赠送人和鱼丸数量（目前只能是100个）
+  
+   * 普通对话
+   * <li class="jschartli chartli">
+   *   <p class="text_cont">
+   *     <span class="name">
+   *       <a href="#" class="nick js_nick" rel="1320690">jeffery0523:</a>
+   *     </span>
+   *     <span class="text_cont">2cm是什么梗</span>
+   *   </p>
+   * </li>
+  
+   * 当前用户“我”说的话
+   * <li class="jschartli">
+   *   <p class="my_cont">
+   *     <span><img src="http://staticlive.douyutv.com/common/douyu/images/roomadmin.gif?20140704"></span>
+   *     <span class="name">
+   *       <a href="#" class="nick js_nick" rel="1331302" gid="1">我:</a>
+   *     </span>
+   *     <span class="m" chatid="4e7113263f3e41f57651000000000000">感谢&nbsp;ft303ft&nbsp;送来的200个鱼丸！!</span>
+   *   </p>
+   * </li>
+  
+   * 到访欢迎
+   * <li class="jschartli">
+   *   <p class="text_cont">
+   *     <a style="color:#F00">系统提示</a>
+   *     <a></a>
+   *     ：欢迎 
+   *     <img src="http://staticlive.douyutv.com/common/douyu/images/classimg/user12.png">
+   *     <a style="color:#F00" class="js_nick" rel="2425">兮诺</a>
+   *     <a></a> 来到 <a style="color:#F00">炉石王师傅</a>的直播间
+   *   </p>
+   * </li>
+  
+   * 封禁广播
+   * <li class="jschartli">
+   *   <p class="text_cont">
+   *     <a style="color:#FF0000">系统广播: 群125200871丶180合击w9m5u被管理员禁言</a>
+   *   </p>
+   * </li>
+   * <li class="jschartli"> 
+   *   <p class="text_cont">
+   *     <a style="color:#FF0000">系统广播: dengkenxie842被管理员珞晓沫禁言</a>
+   *   </p>
+   * </li>
+  
+   * 赠送鱼丸
+   * <li class="jschartli">
+   *   <p class="text_cont">
+   *     <img src="http://staticlive.douyutv.com/common/douyu/images/classimg/user4.png"> 
+   *     <a href="#" class="nick js_nick" rel="3170929">HitMANooooo</a>
+   *     赠送给主播<i>100</i>个鱼丸
+   *     <img src="http://staticlive.douyutv.com/common/douyu/images/yw.png">
+   *   </p>
+   * </li>
+  
+   * 赠送特殊鱼丸
+   * <li class="jschartli">
+   *   <p class="text_cont">
+   *     <img src="http://staticlive.douyutv.com/common/douyu/images/classimg/user2.png">
+   *       <a href="#" class="nick js_nick" rel="10021060">mawenzhe7</a>
+   *       <br>赠送给主播
+   *       <i><img src="http://staticlive.douyutv.com/common/douyu/images/zs520.png?v3979.1">
+   *       </i>个鱼丸
+   *       <img src="http://staticlive.douyutv.com/common/douyu/images/yw520.png?20150430">
+   *   </p>
+   * </li>
+  
+   * 赠送酬勤
+   * <li class="jschartli counted aaa">
+   *   <p class="text_cont">
+   *     <img src="http://staticlive.douyutv.com/common/douyu/images/classimg/user7.png">
+   *     <a href="#" class="nick" rel="939651">泣血剑殇</a> 
+   *     赠送了高级酬勤
+   *     <img src="http://staticlive.douyutv.com/common/douyu/images/cq3.gif?">
+   *     成为了本房间
+   *     <span>
+   *     <img src="http://staticlive.douyutv.com/common/douyu/images/no3.gif?">
+   *     </span>会员
+   *   </p>
+   * </li>
+   */
 
   ChatLine = (function() {
     function ChatLine($li) {
@@ -376,6 +477,51 @@
     };
 
     return YuwanStack;
+
+  })();
+
+  ChouqinStack = (function() {
+    function ChouqinStack(cui) {
+      this.cui = cui;
+      this.data = {};
+    }
+
+    ChouqinStack.prototype.push = function(lines) {
+      var chouqinlevel, line, time, username, _base, _base1, _i, _len;
+      time = new Date().getTime();
+      for (_i = 0, _len = lines.length; _i < _len; _i++) {
+        line = lines[_i];
+        username = line.username;
+        chouqinlevel = line.chouqinlevel;
+        if ((_base = this.data)[username] == null) {
+          _base[username] = {
+            updated_at: time
+          };
+        }
+        this.data[username].updated_at = time;
+        if ((_base1 = this.data[username])[chouqinlevel] == null) {
+          _base1[chouqinlevel] = 0;
+        }
+        this.data[username][chouqinlevel] = this.data[username][chouqinlevel] + 1;
+      }
+      return this;
+    };
+
+    ChouqinStack.prototype.release = function(func) {
+      var d, time, username, _ref;
+      time = new Date().getTime();
+      _ref = this.data;
+      for (username in _ref) {
+        d = _ref[username];
+        if (time - d.updated_at >= this.cui.YUWAN_TNANKS_DELAY) {
+          func(username, d);
+          delete this.data[username];
+        }
+      }
+      return this;
+    };
+
+    return ChouqinStack;
 
   })();
 
