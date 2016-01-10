@@ -254,6 +254,21 @@ class ChatList
 #   </p>
 # </li>
 
+# <li class="jschartli new_bs_li">
+#   <p class="text_cont">
+#     <img src="http://staticlive.douyutv.com/common/douyu/images/classimg/user14.gif">
+#     <span class="cq_level c_lv3">
+#       <img src="http://staticlive.douyutv.com/common/douyu/images/cq_no03.png?v10213">
+#       <em>×34</em>
+#     </span>
+#     <a href="javascript:;" class="nick js_nick" rel="10278492">萬事屋銀桑</a>
+#     赠送给主播100鱼丸
+#     <img class="lw_imgs" src="http://staticlive.douyutv.com/upload/dygift/0f15e056aab1bb65a08db26b5682c11d.png" widht="25" height="25" style="margin-bottom:-3px">
+#     <span style="white-space:nowrap;word-wrap:normal;word-break:keep-all;">62连击</span>
+#   </p>
+# </li>
+# text ×34萬事屋銀桑赠送给主播100鱼丸 62连击
+
 # 赠送特殊鱼丸
 # <li class="jschartli">
 #   <p class="text_cont">
@@ -293,7 +308,8 @@ class ChatLine
     else if @raw.indexOf('系统提示：欢迎') > -1
       @kind = 'welcome'
       @username = @raw.split(' ')[2]
-      @userlevel = @$li.find('img').attr('src').split('classimg/')[1].split('.gif')[0]
+      try
+        @userlevel = @$li.find('img').attr('src').split('classimg/')[1].split('.gif')[0]
 
     else if @raw.indexOf('被管理员') > -1 and @raw.indexOf('禁言') > -1
       @kind = 'forbid'
@@ -303,20 +319,29 @@ class ChatLine
     else if @raw.indexOf('赠送给主播') > -1
       @kind = 'yuwan'
       @username = @$li.find('.nick').text()
-      @userlevel = @$li.find('img').attr('src').split('classimg/')[1].split('.gif')[0]
+      try
+        @userlevel = @$li.find('img').attr('src').split('classimg/')[1].split('.gif')[0]
 
       # 这里要分情况，特殊赠送的话是图片
       if @$li.find('i img').length > 0
         src = @$li.find('i img').attr('src')
         match = src.match /zs([0-9]+)/
         @count = parseInt(match[1]) if match
+      # else if @$li.find('img.lw_imgs').length > 0
+      #   @kind = 'zan'
       else
-        @count = parseInt @$li.find('i').text()
+        # @count = parseInt @$li.find('i').text()
+        match = @$li.text().match(/主播(\d+)个?鱼丸/)
+        if match
+          @count = parseInt(match[1]) 
+        else
+          @kind = 'undefined'
 
     else if @raw.indexOf('酬勤') > -1
-      @kind = 'chouqin'
-      @username = @$li.find('.nick').text()
-      @chouqinlevel = @raw.match(/赠送了(.+)酬勤/)[1]
+      @chouqinlevel = @raw.match(/赠送了(.+)酬勤/)?[1]
+      if @chouqinlevel
+        @kind = 'chouqin'
+        @username = @$li.find('.nick').text()
 
   # 标记为已经统计
   mark_counted: ->

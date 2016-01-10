@@ -328,6 +328,21 @@
    *   </p>
    * </li>
   
+   * <li class="jschartli new_bs_li">
+   *   <p class="text_cont">
+   *     <img src="http://staticlive.douyutv.com/common/douyu/images/classimg/user14.gif">
+   *     <span class="cq_level c_lv3">
+   *       <img src="http://staticlive.douyutv.com/common/douyu/images/cq_no03.png?v10213">
+   *       <em>×34</em>
+   *     </span>
+   *     <a href="javascript:;" class="nick js_nick" rel="10278492">萬事屋銀桑</a>
+   *     赠送给主播100鱼丸
+   *     <img class="lw_imgs" src="http://staticlive.douyutv.com/upload/dygift/0f15e056aab1bb65a08db26b5682c11d.png" widht="25" height="25" style="margin-bottom:-3px">
+   *     <span style="white-space:nowrap;word-wrap:normal;word-break:keep-all;">62连击</span>
+   *   </p>
+   * </li>
+   * text ×34萬事屋銀桑赠送给主播100鱼丸 62连击
+  
    * 赠送特殊鱼丸
    * <li class="jschartli">
    *   <p class="text_cont">
@@ -357,7 +372,7 @@
 
   ChatLine = (function() {
     function ChatLine($li) {
-      var match, src;
+      var match, src, _ref;
       this.$li = $li;
       this.raw = this.$li.find('p.text_cont').text();
       if (this.$li.hasClass('chartli')) {
@@ -367,7 +382,9 @@
       } else if (this.raw.indexOf('系统提示：欢迎') > -1) {
         this.kind = 'welcome';
         this.username = this.raw.split(' ')[2];
-        this.userlevel = this.$li.find('img').attr('src').split('classimg/')[1].split('.gif')[0];
+        try {
+          this.userlevel = this.$li.find('img').attr('src').split('classimg/')[1].split('.gif')[0];
+        } catch (_error) {}
       } else if (this.raw.indexOf('被管理员') > -1 && this.raw.indexOf('禁言') > -1) {
         this.kind = 'forbid';
         this.username = this.raw.split('被管理员')[0].split('系统广播: ')[1];
@@ -375,7 +392,9 @@
       } else if (this.raw.indexOf('赠送给主播') > -1) {
         this.kind = 'yuwan';
         this.username = this.$li.find('.nick').text();
-        this.userlevel = this.$li.find('img').attr('src').split('classimg/')[1].split('.gif')[0];
+        try {
+          this.userlevel = this.$li.find('img').attr('src').split('classimg/')[1].split('.gif')[0];
+        } catch (_error) {}
         if (this.$li.find('i img').length > 0) {
           src = this.$li.find('i img').attr('src');
           match = src.match(/zs([0-9]+)/);
@@ -383,12 +402,19 @@
             this.count = parseInt(match[1]);
           }
         } else {
-          this.count = parseInt(this.$li.find('i').text());
+          match = this.$li.text().match(/主播(\d+)个?鱼丸/);
+          if (match) {
+            this.count = parseInt(match[1]);
+          } else {
+            this.kind = 'undefined';
+          }
         }
       } else if (this.raw.indexOf('酬勤') > -1) {
-        this.kind = 'chouqin';
-        this.username = this.$li.find('.nick').text();
-        this.chouqinlevel = this.raw.match(/赠送了(.+)酬勤/)[1];
+        this.chouqinlevel = (_ref = this.raw.match(/赠送了(.+)酬勤/)) != null ? _ref[1] : void 0;
+        if (this.chouqinlevel) {
+          this.kind = 'chouqin';
+          this.username = this.$li.find('.nick').text();
+        }
       }
     }
 
