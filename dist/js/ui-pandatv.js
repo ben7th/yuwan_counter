@@ -1,5 +1,5 @@
 (function() {
-  var ChatLine, ChatList, ChatQueue, ChatSender, ChouqinStack, CounterUi, SaveQueue, YuwanStack;
+  var ChatLine, ChatList, ChatQueue, ChatSender, CounterUi, GiftStack, SaveQueue, YuwanStack;
 
   CounterUi = (function() {
     CounterUi.prototype.SCAN_PERIOD = 500;
@@ -17,7 +17,7 @@
     function CounterUi() {
       this.chatlist = new ChatList;
       this.yuwan_stack = new YuwanStack(this);
-      this.chouqin_stack = new ChouqinStack(this);
+      this.gift_stack = new GiftStack(this);
       this.chat_queue = new ChatQueue(this);
       this.save_queue = new SaveQueue(this);
     }
@@ -38,7 +38,7 @@
       })(this), this.SCAN_PERIOD);
       return this.send_timer = setInterval((function(_this) {
         return function() {
-          if (jQuery('#chat_dispatch').val().length === 0) {
+          if (jQuery('.room-chat-texta').val().length === 0) {
             return _this.chat_queue.shift();
           }
         };
@@ -46,7 +46,7 @@
     };
 
     CounterUi.prototype._scan = function() {
-      var chatlines, data, line, zhuzi_lines, _i, _len, _results;
+      var chatlines, data, gift_lines, line, zhuzi_lines, _i, _len, _results;
       chatlines = this.chatlist.updated_lines();
       zhuzi_lines = (function() {
         var _i, _len, _results;
@@ -60,6 +60,18 @@
         return _results;
       })();
       this._thanks(zhuzi_lines);
+      gift_lines = (function() {
+        var _i, _len, _results;
+        _results = [];
+        for (_i = 0, _len = chatlines.length; _i < _len; _i++) {
+          line = chatlines[_i];
+          if (line.kind === 'gift') {
+            _results.push(line);
+          }
+        }
+        return _results;
+      })();
+      this._tanks_gift(gift_lines);
       _results = [];
       for (_i = 0, _len = chatlines.length; _i < _len; _i++) {
         line = chatlines[_i];
@@ -85,14 +97,27 @@
       })(this));
     };
 
+    CounterUi.prototype._tanks_gift = function(gift_lines) {
+      return this.gift_stack.push(gift_lines).release((function(_this) {
+        return function(username, data) {
+          var _action, _actions, _text;
+          console.log(data);
+          _actions = ['喂食'];
+          _action = _actions[~~(Math.random() * _actions.length)];
+          _text = "感谢 " + username + " " + _action + "的" + data[data.giftname] + "个" + data.giftname + "！";
+          return _this.chat_queue.push(_text);
+        };
+      })(this));
+    };
+
     return CounterUi;
 
   })();
 
   this.ZhiBoChatList = ChatList = (function() {
     function ChatList() {
-      this.$elm = jQuery('ul.chat-content-container');
-      this.$elm.find('li.chat-item').removeClass('counted');
+      this.$elm = jQuery('ul.room-chat-messages');
+      this.$elm.find('li.room-chat-item').removeClass('counted');
     }
 
     ChatList.prototype.lines = function(kind) {
@@ -102,7 +127,7 @@
       }
       lines = (function() {
         var _i, _len, _ref, _results;
-        _ref = this.$elm.find('li.chat-item');
+        _ref = this.$elm.find('li.room-chat-item');
         _results = [];
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           li = _ref[_i];
@@ -135,7 +160,7 @@
       }
       lines = (function() {
         var _i, _len, _ref, _results;
-        _ref = this.$elm.find('li.chat-item:not(.counted)');
+        _ref = this.$elm.find('li.room-chat-item:not(.counted)');
         _results = [];
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           li = _ref[_i];
@@ -174,10 +199,16 @@
     function ChatLine($li) {
       this.$li = $li;
       this.raw = this.$li.find('p.text_cont').text();
-      if (this.$li.hasClass('chat-send-bamboo')) {
+      if (this.$li.hasClass('room-chat-send-bamboo')) {
         this.kind = 'zhuzi';
-        this.username = this.$li.find('.chat-user-name').text();
-        this.count = parseInt(this.$li.find('.chat-num').text());
+        this.username = this.$li.find('.room-chat-user-name').text();
+        this.count = parseInt(this.$li.find('.room-chat-send-bamboo-num').text());
+      }
+      if (this.$li.hasClass('room-chat-send-gift')) {
+        this.kind = 'gift';
+        this.username = this.$li.find('.room-chat-user-name').text();
+        this.giftname = this.$li.find('.room-chat-send-gift-name').text();
+        this.count = 1;
       }
     }
 
@@ -269,34 +300,35 @@
 
   })();
 
-  ChouqinStack = (function() {
-    function ChouqinStack(cui) {
+  GiftStack = (function() {
+    function GiftStack(cui) {
       this.cui = cui;
       this.data = {};
     }
 
-    ChouqinStack.prototype.push = function(lines) {
-      var chouqinlevel, line, time, username, _base, _base1, _i, _len;
+    GiftStack.prototype.push = function(lines) {
+      var giftname, line, time, username, _base, _base1, _i, _len;
       time = new Date().getTime();
       for (_i = 0, _len = lines.length; _i < _len; _i++) {
         line = lines[_i];
         username = line.username;
-        chouqinlevel = line.chouqinlevel;
+        giftname = line.giftname;
         if ((_base = this.data)[username] == null) {
           _base[username] = {
-            updated_at: time
+            updated_at: time,
+            giftname: giftname
           };
         }
         this.data[username].updated_at = time;
-        if ((_base1 = this.data[username])[chouqinlevel] == null) {
-          _base1[chouqinlevel] = 0;
+        if ((_base1 = this.data[username])[giftname] == null) {
+          _base1[giftname] = 0;
         }
-        this.data[username][chouqinlevel] = this.data[username][chouqinlevel] + 1;
+        this.data[username][giftname] = this.data[username][giftname] + 1;
       }
       return this;
     };
 
-    ChouqinStack.prototype.release = function(func) {
+    GiftStack.prototype.release = function(func) {
       var d, time, username, _ref;
       time = new Date().getTime();
       _ref = this.data;
@@ -310,7 +342,7 @@
       return this;
     };
 
-    return ChouqinStack;
+    return GiftStack;
 
   })();
 
@@ -331,8 +363,8 @@
       _text = "" + text + char;
       console.debug(_text);
       if (!this.cui.DEBUG_MODE) {
-        jQuery('#chat_dispatch').val(_text);
-        return jQuery('.dispatch-btn').trigger('click');
+        jQuery('.room-chat-texta').val(_text);
+        return jQuery('.room-chat-send').trigger('click');
       }
     };
 

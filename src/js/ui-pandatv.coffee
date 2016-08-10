@@ -13,8 +13,10 @@ class CounterUi
 
   constructor: ->
     @chatlist = new ChatList
+
     @yuwan_stack = new YuwanStack @
-    @chouqin_stack = new ChouqinStack @
+    @gift_stack = new GiftStack @
+
     @chat_queue = new ChatQueue @
     @save_queue = new SaveQueue @
 
@@ -38,7 +40,7 @@ class CounterUi
     , @SCAN_PERIOD
 
     @send_timer = setInterval =>
-      if jQuery('#chat_dispatch').val().length == 0
+      if jQuery('.room-chat-texta').val().length == 0
         @chat_queue.shift()
     , @SEND_PERIOD
 
@@ -75,10 +77,15 @@ class CounterUi
   # 扫描聊天信息，并进行相应处理
   _scan: ->
     chatlines = @chatlist.updated_lines()
+    # chatlines = @chatlist.lines()
 
     # 竹子答谢
     zhuzi_lines = (line for line in chatlines when line.kind is 'zhuzi')
     @_thanks zhuzi_lines
+
+    # 礼物答谢
+    gift_lines = (line for line in chatlines when line.kind is 'gift')
+    @_tanks_gift gift_lines
 
     # # 酬勤答谢
     # chouqin_lines = (line for line in chatlines when line.kind is 'chouqin')
@@ -111,51 +118,27 @@ class CounterUi
         _text = "感谢 #{username} #{_action}的#{data.count}棵竹子！"
         @chat_queue.push _text
 
-        # # 升级检查
-        # _levels = {
-        #   user1:  '菜鸟'
-        #   user2:  '黄铜五'
-        #   user3:  '黄铜四'
-        #   user4:  '黄铜三'
-        #   user5:  '黄铜二'
-        #   user6:  '黄铜一'
-        #   user7:  '白银五'
-        #   user8:  '白银四'
-        #   user9:  '白银三'
-        #   user10: '白银二'
-        #   user11: '白银一'
-        #   user12: '黄金五'
-        #   user13: '黄金四'
-        #   user14: '黄金三'
-        #   user15: '黄金二'
-        #   user16: '黄金一'
-        #   user17: '铂金五'
-        #   user18: '铂金四'
-        #   user19: '铂金三'
-        #   user20: '铂金二'
-        #   user21: '铂金一'
-        #   user22: '钻石五'
-        #   user23: '钻石四'
-        #   user24: '钻石三'
-        #   user25: '钻石二'
-        #   user26: '钻石一'
-        # }
+  _tanks_gift: (gift_lines)->
+    @gift_stack
+      .push gift_lines
+      .release (username, data)=>
+        console.log data
+        _actions = [
+          '喂食'
+        ]
 
-        # if data.end_userlevel != data.begin_userlevel
-        #   # console.debug data
-        #   _level = _levels[data.end_userlevel]
-        #   _text1 = "！！恭喜 #{username} 渡劫到#{_level}！"
-        #   @chat_queue.push _text1
-
+        _action = _actions[~~ (Math.random() * _actions.length)]
+        _text = "感谢 #{username} #{_action}的#{data[data.giftname]}个#{data.giftname}！"
+        @chat_queue.push _text
 
 @ZhiBoChatList = class ChatList
   constructor: ->
-    @$elm = jQuery 'ul.chat-content-container'
-    @$elm.find('li.chat-item').removeClass 'counted'
+    @$elm = jQuery 'ul.room-chat-messages'
+    @$elm.find('li.room-chat-item').removeClass 'counted'
 
   # 获取当前页面内所有对话行
   lines: (kind = 'all')->
-    lines = for li in @$elm.find('li.chat-item')
+    lines = for li in @$elm.find('li.room-chat-item')
       new ChatLine jQuery(li)
 
     switch kind
@@ -167,7 +150,7 @@ class CounterUi
   # 获取当前页面内所有新增对话行
   # 已经获取过一次的对话行会被标记，下次不再获取
   updated_lines: (kind = 'all')->
-    lines = for li in @$elm.find('li.chat-item:not(.counted)')
+    lines = for li in @$elm.find('li.room-chat-item:not(.counted)')
       new ChatLine jQuery(li)
 
     re = switch kind
@@ -190,7 +173,7 @@ class CounterUi
 # 4. 赠送鱼丸。包含鱼丸赠送人和鱼丸数量（目前只能是100个）
 
 # 赠送竹子
-# <li class="chat-item chat-send-bamboo">
+# <li class="room-chat-item room-chat-send-bamboo">
 #   <div class="chat-content-item">
 #     <span class="chat-user-name" data-rid="3150540">半个菩提</span>赠送给
 #     <span class="chat-host-name">主播</span>
@@ -201,15 +184,33 @@ class CounterUi
 #   </div>
 # </li>
 
+# 赠送礼品
+# <li class="room-chat-item room-chat-send-gift counted">
+#   <div class="chat-content-item">
+#     <span class="chat-user-name" data-rid="7049568">sleepysharui</span>赠送出
+#     <!--<span class="chat-host-name">主播</span>-->
+#     <span class="chat-num">1</span>
+#     <span class="chat-unit">个</span>
+#     <span>龙虾</span>
+#     <img class="gift-icon" src="http://i4.pdim.gs/t01c4fd7e287ad3d63e.png">
+#   </div>
+# </li>
+
 class ChatLine
   constructor: (@$li)->
     @raw = @$li.find('p.text_cont').text()
     
     # 根据 dom 结构判断对话类型
-    if @$li.hasClass 'chat-send-bamboo'
+    if @$li.hasClass 'room-chat-send-bamboo'
       @kind = 'zhuzi'
-      @username = @$li.find('.chat-user-name').text()
-      @count = parseInt @$li.find('.chat-num').text()
+      @username = @$li.find('.room-chat-user-name').text()
+      @count = parseInt @$li.find('.room-chat-send-bamboo-num').text()
+
+    if @$li.hasClass 'room-chat-send-gift'
+      @kind = 'gift'
+      @username = @$li.find('.room-chat-user-name').text()
+      @giftname = @$li.find('.room-chat-send-gift-name').text()
+      @count = 1
 
   # 标记为已经统计
   mark_counted: ->
@@ -286,8 +287,8 @@ class YuwanStack
     return @
 
 
-# 酬勤堆栈，记录投喂人和投喂数
-class ChouqinStack
+# 礼物堆栈，记录投喂人和投喂数
+class GiftStack
   constructor: (@cui)->
     @data = {}
 
@@ -295,14 +296,15 @@ class ChouqinStack
     time = new Date().getTime()
     for line in lines
       username = line.username
-      chouqinlevel = line.chouqinlevel
+      giftname = line.giftname
 
       @data[username] ?= {
         updated_at: time
+        giftname: giftname
       }
       @data[username].updated_at = time
-      @data[username][chouqinlevel] ?= 0
-      @data[username][chouqinlevel] = @data[username][chouqinlevel] + 1
+      @data[username][giftname] ?= 0
+      @data[username][giftname] = @data[username][giftname] + 1
 
     return @
 
@@ -331,8 +333,8 @@ class ChatSender
     console.debug _text
 
     if not @cui.DEBUG_MODE
-      jQuery('#chat_dispatch').val(_text)
-      jQuery('.dispatch-btn').trigger('click')
+      jQuery('.room-chat-texta').val(_text)
+      jQuery('.room-chat-send').trigger('click')
 
     # f = [
     #   {name: "content", value: _text}
